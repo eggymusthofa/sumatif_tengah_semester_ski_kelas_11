@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asesmen Sumatif Tengah Semester SKI</title>
+    <style>
+        :root {
+            --primary: #006633;
+            --secondary: #00994c;
+            --bg: #f4f7f6;
+            --text: #333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        header img {
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1, h2, h3 { color: var(--primary); }
+        .creator { font-size: 0.9em; font-style: italic; opacity: 0.9; }
+        
+        /* Forms & Buttons */
+        input, select, textarea, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: var(--secondary); }
+        button.btn-secondary { background-color: #666; }
+        button.btn-danger { background-color: #cc0000; }
+        
+        /* Views */
+        .view { display: none; }
+        .active { display: block; }
+        
+        /* Quiz Elements */
+        .question-card {
+            background: #fafafa;
+            padding: 20px;
+            border-left: 5px solid var(--primary);
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .timer-bar {
+            position: sticky;
+            top: 0;
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 2px solid #ffeeba;
+            z-index: 100;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td { border: 1px solid #ddd; }
+        th, td { padding: 12px; text-align: left; }
+        th { background-color: var(--primary); color: white; }
+        
+        .flex-row { display: flex; gap: 10px; }
+        .flex-row button { margin: 0; }
+        .option-label { display: flex; align-items: center; gap: 10px; font-weight: normal; cursor: pointer; }
+        .option-label input { width: auto; }
+        
+        #admin-json-editor { height: 300px; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img id="app-logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Logo_Nahdlatul_Ulama.svg/1200px-Logo_Nahdlatul_Ulama.svg.png" alt="Logo Institusi">
+        <h2>Asesmen Sumatif Tengah Semester SKI Kelas X</h2>
+        <h3>MA Muallimin NU Kota Malang</h3>
+        <div class="creator">Disusun oleh: Eggy Fachrezha Musthofa</div>
+    </header>
+
+    <!-- PORTAL UTAMA -->
+    <div id="view-portal" class="container view active">
+        <h2 style="text-align: center;">Pilih Masuk Sebagai</h2>
+        <button onclick="switchView('view-login-siswa')">Siswa</button>
+        <button onclick="switchView('view-login-admin')" class="btn-secondary">Guru / Admin</button>
+    </div>
+
+    <!-- LOGIN SISWA -->
+    <div id="view-login-siswa" class="container view">
+        <h2>Identitas Siswa</h2>
+        <label>Username (Nama Panggilan/ID):</label>
+        <input type="text" id="siswa-username" placeholder="Masukkan Username...">
+        <label>Nama Lengkap:</label>
+        <input type="text" id="siswa-nama" placeholder="Masukkan Nama Lengkap...">
+        <label>Kelas:</label>
+        <select id="siswa-kelas">
+            <option value="X-A">Kelas X-A</option>
+            <option value="X-B">Kelas X-B</option>
+            <option value="X-C">Kelas X-C</option>
+        </select>
+        <div class="flex-row">
+            <button onclick="loginSiswa()">Masuk</button>
+            <button onclick="switchView('view-portal')" class="btn-secondary">Kembali</button>
+        </div>
+    </div>
+
+    <!-- LOGIN ADMIN -->
+    <div id="view-login-admin" class="container view">
+        <h2>Login Admin</h2>
+        <label>Username:</label>
+        <input type="text" id="admin-user" placeholder="Username...">
+        <label>Password:</label>
+        <input type="password" id="admin-pass" placeholder="Password...">
+        <div class="flex-row">
+            <button onclick="loginAdmin()">Login</button>
+            <button onclick="switchView('view-portal')" class="btn-secondary">Kembali</button>
+        </div>
+    </div>
+
+    <!-- DASHBOARD SISWA -->
+    <div id="view-dashboard-siswa" class="container view">
+        <h2>Selamat Datang, <span id="dash-siswa-nama"></span></h2>
+        <p>Kelas: <span id="dash-siswa-kelas"></span></p>
+        <div style="background: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <p><strong>Informasi Ujian:</strong></p>
+            <ul>
+                <li>Mata Pelajaran: Sejarah Kebudayaan Islam (SKI)</li>
+                <li>Waktu: 90 Menit</li>
+                <li>KKM: 76</li>
+                <li>Batas Pengerjaan: Maksimal 10 Kali (Telah dikerjakan: <span id="dash-siswa-attempts"></span>/10)</li>
+            </ul>
+        </div>
+        <button id="btn-mulai-ujian" onclick="startUjian(false)">Mulai Ujian</button>
+        <button onclick="downloadNilaiSiswa()" class="btn-secondary">Download Riwayat Nilai Saya (Excel/CSV)</button>
+        <button onclick="logout()" class="btn-danger">Keluar</button>
+    </div>
+
+    <!-- DASHBOARD ADMIN -->
+    <div id="view-dashboard-admin" class="container view">
+        <h2>Panel Admin / Guru</h2>
+        
+        <h3>Menu Utama</h3>
+        <button onclick="startUjian(true)">Uji Coba Aplikasi (Simulasi Siswa)</button>
+        <button onclick="downloadSemuaNilai()">Download Rekap Nilai Siswa (Excel/CSV)</button>
+        
+        <h3>Pengaturan Aplikasi</h3>
+        <label>Ubah URL Logo:</label>
+        <input type="text" id="admin-logo-url" placeholder="Masukkan link gambar logo...">
+        <button onclick="saveLogo()" class="btn-secondary">Simpan Logo</button>
+
+        <label>Ubah Password Admin:</label>
+        <input type="text" id="admin-new-pass" placeholder="Password Baru...">
+        <button onclick="savePassword()" class="btn-secondary">Simpan Password Baru</button>
+
+        <h3>Manajemen Soal (Data JSON)</h3>
+        <p>Anda dapat menambah hingga 50 soal (PG, PG Kompleks, Menjodohkan, Isian) dengan mengedit data di bawah ini:</p>
+        <textarea id="admin-json-editor"></textarea>
+        <button onclick="saveSoal()">Simpan Konfigurasi Soal</button>
+        <button onclick="logout()" class="btn-danger">Keluar Admin</button>
+    </div>
+
+    <!-- TAMPILAN UJIAN -->
+    <div id="view-ujian" class="view">
+        <div class="timer-bar">Sisa Waktu: <span id="timer-display">90:00</span></div>
+        <div class="container" id="quiz-container">
+            <!-- Soal akan di-render di sini oleh JavaScript -->
+        </div>
+        <div class="container">
+            <button onclick="submitUjian()">Selesai & Kumpulkan Jawaban</button>
+        </div>
+    </div>
+
+    <!-- TAMPILAN HASIL -->
+    <div id="view-hasil" class="container view" style="text-align: center;">
+        <h2>Hasil Asesmen Sumatif Tengah Semester</h2>
+        <h1 style="font-size: 4em; margin: 10px 0;" id="hasil-skor">0</h1>
+        <h3 id="hasil-keterangan"></h3>
+        <p>KKM: 76</p>
+        <br>
+        <button onclick="downloadHasilIni()">Download Bukti Nilai (Excel/CSV)</button>
+        <button onclick="switchView('view-dashboard-siswa')" id="btn-kembali-dash" class="btn-secondary">Kembali ke Beranda</button>
+    </div>
+
+<script>
+    // --- DATABASE MOCK (LocalStorage) ---
+    let appData = JSON.parse(localStorage.getItem('ski_appData')) || {
+        adminUser: 'admin',
+        adminPass: 'admin123',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Logo_Nahdlatul_Ulama.svg/1200px-Logo_Nahdlatul_Ulama.svg.png',
+        students: {}, // { username: { nama, kelas, attempts, history: [] } }
+        questions: [
+            {
+                id: 1, type: 'mc', // Pilihan Ganda (25 Soal)
+                text: "Keberhasilan dakwah Rasulullah di Madinah tidak lepas dari strategi mempersaudarakan kaum Muhajirin dan Anshar. Dampak sosial terpenting dari kebijakan ini bagi peradaban baru di Madinah adalah...",
+                options: [
+                    "A. Meningkatnya kekuatan militer untuk menguasai Mekkah",
+                    "B. Terhapusnya kesenjangan ekonomi dan hilangnya sentimen kesukuan",
+                    "C. Berkembangnya sistem pertanian yang lebih modern",
+                    "D. Kaum Muhajirin dapat mengambil alih harta kaum Anshar",
+                    "E. Dominasi politik kaum Anshar di pemerintahan"
+                ],
+                answer: 1 // Index dari jawaban benar (B)
+            },
+            {
+                id: 2, type: 'cmc', // Pilihan Ganda Kompleks (10 Soal)
+                text: "Pada masa Daulah Abbasiyah, Baitul Hikmah menjadi pusat intelektual dunia. Pilih beberapa pernyataan yang benar terkait fungsi dan dampak Baitul Hikmah!",
+                options: [
+                    "Sebagai pusat penerjemahan naskah-naskah kuno Yunani dan Persia",
+                    "Hanya dikhususkan untuk mempelajari ilmu fikih dan tafsir",
+                    "Menjadi perpustakaan publik dan pusat observasi astronomi",
+                    "Didirikan pada masa kekhalifahan Harun Ar-Rasyid dan disempurnakan oleh Al-Makmun",
+                    "Menolak ilmu-ilmu umum dan sains dari luar Islam"
+                ],
+                answer: [0, 2, 3] // Index jawaban yang benar
+            },
+            {
+                id: 3, type: 'match', // Menjodohkan (10 Soal)
+                text: "Pasangkan tokoh ilmuwan pada masa Daulah Abbasiyah dengan bidang keahliannya yang tepat!",
+                pairs: [
+                    { left: "Al-Khawarizmi", right: "Matematika (Aljabar)" },
+                    { left: "Ibnu Sina", right: "Kedokteran (Qanun Fi Thib)" },
+                    { left: "Al-Kindi", right: "Filsafat" }
+                ]
+            },
+            {
+                id: 4, type: 'short', // Isian Singkat (5 Soal)
+                text: "Dokumen kesepakatan yang dibuat oleh Rasulullah untuk mengatur hubungan antar kelompok masyarakat di Madinah, termasuk dengan kaum Yahudi, dikenal dengan nama...",
+                answer: "Piagam Madinah"
+            }
+            // Admin dapat menambahkan hingga 50 soal sesuai kebutuhan di Panel Admin
+        ]
+    };
+
+    let currentUser = null; // Menyimpan info user yang login
+    let timerInterval = null;
+    let waktuTersisa = 90 * 60; // 90 Menit
+    let isSimulasi = false;
+
+    // --- INISIALISASI ---
+    function saveData() {
+        localStorage.setItem('ski_appData', JSON.stringify(appData));
+    }
+
+    function init() {
+        document.getElementById('app-logo').src = appData.logoUrl;
+    }
+    init();
+
+    // --- NAVIGASI ---
+    function switchView(viewId) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+    }
+
+    // --- AUTENTIKASI ---
+    function loginSiswa() {
+        const username = document.getElementById('siswa-username').value.trim();
+        const nama = document.getElementById('siswa-nama').value.trim();
+        const kelas = document.getElementById('siswa-kelas').value;
+
+        if(!username || !nama) return alert("Username dan Nama tidak boleh kosong!");
+
+        if (!appData.students[username]) {
+            appData.students[username] = { nama: nama, kelas: kelas, attempts: 0, history: [] };
+            saveData();
+        }
+
+        currentUser = { username, role: 'siswa', ...appData.students[username] };
+        
+        document.getElementById('dash-siswa-nama').innerText = currentUser.nama;
+        document.getElementById('dash-siswa-kelas').innerText = currentUser.kelas;
+        document.getElementById('dash-siswa-attempts').innerText = currentUser.attempts;
+
+        const btnMulai = document.getElementById('btn-mulai-ujian');
+        if(currentUser.attempts >= 10) {
+            btnMulai.disabled = true;
+            btnMulai.innerText = "Batas Pengerjaan Habis (10/10)";
+            btnMulai.style.backgroundColor = "grey";
+        } else {
+            btnMulai.disabled = false;
+            btnMulai.innerText = "Mulai Ujian";
+            btnMulai.style.backgroundColor = "var(--primary)";
+        }
+
+        switchView('view-dashboard-siswa');
+    }
+
+    function loginAdmin() {
+        const user = document.getElementById('admin-user').value;
+        const pass = document.getElementById('admin-pass').value;
+        if(user === appData.adminUser && pass === appData.adminPass) {
+            currentUser = { role: 'admin' };
+            document.getElementById('admin-logo-url').value = appData.logoUrl;
+            document.getElementById('admin-json-editor').value = JSON.stringify(appData.questions, null, 4);
+            switchView('view-dashboard-admin');
+        } else {
+            alert("Username atau Password Admin salah!");
+        }
+    }
+
+    function logout() {
+        currentUser = null;
+        switchView('view-portal');
+    }
+
+    // --- PENGATURAN ADMIN ---
+    function saveLogo() {
+        appData.logoUrl = document.getElementById('admin-logo-url').value;
+        document.getElementById('app-logo').src = appData.logoUrl;
+        saveData();
+        alert("Logo berhasil diperbarui!");
+    }
+    
+    function savePassword() {
+        const newPass = document.getElementById('admin-new-pass').value;
+        if(newPass.length < 4) return alert("Password minimal 4 karakter!");
+        appData.adminPass = newPass;
+        saveData();
+        alert("Password berhasil diubah!");
+        document.getElementById('admin-new-pass').value = '';
+    }
+
+    function saveSoal() {
+        try {
+            const newSoal = JSON.parse(document.getElementById('admin-json-editor').value);
+            appData.questions = newSoal;
+            saveData();
+            alert("Berhasil menyimpan data soal!");
+        } catch (e) {
+            alert("Gagal menyimpan! Format JSON tidak valid. Harap periksa kembali.");
+        }
+    }
+
+    // --- ENGINE UJIAN ---
+    function startUjian(simulasi = false) {
+        isSimulasi = simulasi;
+        waktuTersisa = 90 * 60; // Reset waktu 90 menit
+        renderSoal();
+        switchView('view-ujian');
+        
+        timerInterval = setInterval(() => {
+            waktuTersisa--;
+            let m = Math.floor(waktuTersisa / 60);
+            let s = waktuTersisa % 60;
+            document.getElementById('timer-display').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+            if(waktuTersisa <= 0) {
+                clearInterval(timerInterval);
+                submitUjian();
+            }
+        }, 1000);
+    }
+
+    function renderSoal() {
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = '<h2>Soal Asesmen</h2>';
+
+        appData.questions.forEach((q, index) => {
+            let html = `<div class="question-card" id="q_${index}">
+                <p><strong>${index + 1}. ${q.text}</strong></p>`;
+            
+            if(q.type === 'mc') {
+                q.options.forEach((opt, i) => {
+                    html += `<label class="option-label"><input type="radio" name="ans_${index}" value="${i}"> ${opt}</label>`;
+                });
+            } else if (q.type === 'cmc') {
+                html += `<p style="font-size: 0.85em; color: #555;">(Pilih lebih dari satu jawaban yang benar)</p>`;
+                q.options.forEach((opt, i) => {
+                    html += `<label class="option-label"><input type="checkbox" name="ans_${index}" value="${i}"> ${opt}</label>`;
+                });
+            } else if (q.type === 'match') {
+                html += `<table style="width:100%; max-width: 600px;">`;
+                q.pairs.forEach((pair, i) => {
+                    let optionsDropdown = q.pairs.map(p => `<option value="${p.right}">${p.right}</option>`).join('');
+                    html += `<tr>
+                                <td>${pair.left}</td>
+                                <td>
+                                    <select name="ans_${index}_${i}">
+                                        <option value="">-- Pilih Pasangan --</option>
+                                        ${optionsDropdown}
+                                    </select>
+                                </td>
+                            </tr>`;
+                });
+                html += `</table>`;
+            } else if (q.type === 'short') {
+                html += `<input type="text" name="ans_${index}" placeholder="Ketik jawaban singkat di sini...">`;
+            }
+
+            html += `</div>`;
+            container.innerHTML += html;
+        });
+    }
+
+    function submitUjian() {
+        clearInterval(timerInterval);
+        if(!confirm("Yakin ingin menyelesaikan ujian?")) {
+            // Lanjutkan timer jika batal
+            timerInterval = setInterval(() => { waktuTersisa--; }, 1000);
+            return;
+        }
+
+        let totalScore = 0;
+        let maxScore = 0;
+
+        appData.questions.forEach((q, index) => {
+            if(q.type === 'mc') {
+                maxScore += 1;
+                let ans = document.querySelector(`input[name="ans_${index}"]:checked`);
+                if(ans && parseInt(ans.value) === q.answer) totalScore += 1;
+            } 
+            else if (q.type === 'cmc') {
+                maxScore += 1;
+                let checked = Array.from(document.querySelectorAll(`input[name="ans_${index}"]:checked`)).map(e => parseInt(e.value));
+                // Cek jika array jawaban persis sama
+                let isCorrect = checked.length === q.answer.length && checked.every(val => q.answer.includes(val));
+                if(isCorrect) totalScore += 1;
+            } 
+            else if (q.type === 'match') {
+                maxScore += q.pairs.length; // 1 poin per pasangan benar
+                q.pairs.forEach((pair, i) => {
+                    let ans = document.querySelector(`select[name="ans_${index}_${i}"]`).value;
+                    if(ans === pair.right) totalScore += 1;
+                });
+            } 
+            else if (q.type === 'short') {
+                maxScore += 1;
+                let ans = document.querySelector(`input[name="ans_${index}"]`).value.trim().toLowerCase();
+                if(ans === q.answer.toLowerCase()) totalScore += 1;
+            }
+        });
+
+        // Normalisasi Nilai ke skala 100
+        let nilaiAkhir = Math.round((totalScore / maxScore) * 100) || 0;
+
+        // Tampilkan Hasil
+        document.getElementById('hasil-skor').innerText = nilaiAkhir;
+        let keterangan = document.getElementById('hasil-keterangan');
+        if(nilaiAkhir >= 76) {
+            keterangan.innerText = "TUNTAS KKM";
+            keterangan.style.color = "var(--primary)";
+        } else {
+            keterangan.innerText = "BELUM TUNTAS";
+            keterangan.style.color = "red";
+        }
+
+        // Simpan Data jika bukan simulasi
+        if(!isSimulasi) {
+            appData.students[currentUser.username].attempts += 1;
+            appData.students[currentUser.username].history.push({
+                tanggal: new Date().toLocaleString(),
+                nilai: nilaiAkhir,
+                status: nilaiAkhir >= 76 ? 'Tuntas' : 'Belum Tuntas'
+            });
+            saveData();
+            document.getElementById('btn-kembali-dash').onclick = () => loginSiswa(); // Refresh dashboard
+        } else {
+            document.getElementById('btn-kembali-dash').onclick = () => switchView('view-dashboard-admin');
+        }
+
+        switchView('view-hasil');
+    }
+
+    // --- EKSPOR DATA KE EXCEL/CSV ---
+    function generateCSV(filename, csvData) {
+        let blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        let link = document.createElement("a");
+        let url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function downloadNilaiSiswa() {
+        let history = appData.students[currentUser.username].history;
+        if(history.length === 0) return alert("Belum ada riwayat pengerjaan.");
+        
+        let csv = "Nama,Kelas,Tanggal Pengerjaan,Nilai,Status KKM\n";
+        history.forEach(h => {
+            csv += `"${currentUser.nama}","${currentUser.kelas}","${h.tanggal}",${h.nilai},"${h.status}"\n`;
+        });
+        generateCSV(`Nilai_${currentUser.nama}.csv`, csv);
+    }
+
+    function downloadHasilIni() {
+        let nama = isSimulasi ? "Simulasi_Admin" : currentUser.nama;
+        let nilai = document.getElementById('hasil-skor').innerText;
+        let csv = `Nama,Nilai\n"${nama}",${nilai}`;
+        generateCSV(`Bukti_Nilai_${nama}.csv`, csv);
+    }
+
+    function downloadSemuaNilai() {
+        let students = appData.students;
+        let csv = "Username,Nama Lengkap,Kelas,Jumlah Pengerjaan,Nilai Terbaik,Nilai Terakhir\n";
+        
+        for (let user in students) {
+            let s = students[user];
+            if(s.history.length > 0) {
+                let maxNilai = Math.max(...s.history.map(h => h.nilai));
+                let lastNilai = s.history[s.history.length - 1].nilai;
+                csv += `"${user}","${s.nama}","${s.kelas}",${s.attempts},${maxNilai},${lastNilai}\n`;
+            } else {
+                csv += `"${user}","${s.nama}","${s.kelas}",0,0,0\n`;
+            }
+        }
+        generateCSV(`Rekap_Nilai_SKI_Kelas_X.csv`, csv);
+    }
+</script>
+</body>
+</html>
